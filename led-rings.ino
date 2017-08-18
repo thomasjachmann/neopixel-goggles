@@ -65,7 +65,7 @@ void loop() {
     case 1:
       // cycle to next animation
       nextRandomAnimationAt = 0;
-      selectAnimation((selectedAnimation + 1) % 7);
+      selectAnimation((selectedAnimation + 1) % 8);
       break;
     case 2:
       // activate random animation cycling
@@ -109,6 +109,9 @@ void loop() {
         break;
       case 6:
         blink(50);
+        break;
+      case 7:
+        rainbowCycle(20);
         break;
       case 98: // torch mode
         torch(1000);
@@ -177,7 +180,7 @@ void selectAnimation(byte animation) {
 void selectRandomAnimation() {
   byte newAnimation;
   do {
-    newAnimation = random(7);
+    newAnimation = random(8);
   } while (newAnimation == selectedAnimation);
   selectAnimation(newAnimation);
   nextRandomAnimationAt = now + 5000;
@@ -327,15 +330,11 @@ void rainbow(uint8_t wait) {
 
 // Slightly different, this makes the rainbow equally distributed throughout
 void rainbowCycle(uint8_t wait) {
-  uint16_t i, j;
-
-  for(j=0; j<256*5; j++) { // 5 cycles of all colors on wheel
-    for(i=0; i< strip.numPixels(); i++) {
-      strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
-    }
-    strip.show();
-    delay(wait);
+  for(uint16_t led = 0; led < strip.numPixels(); led++) {
+    strip.setPixelColor(mirroredPositions[led], colorByHue(((led * 256 / strip.numPixels()) + i) & 255));
   }
+  strip.show();
+  cycleI(256 * 5, wait); // 5 cycles of all colors on colorByHue
 }
 
 //Theatre-style crawling lights.
