@@ -21,13 +21,16 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(LEDS, SIGNAL_PIN, NEO_GRB + NEO_KHZ8
 // variables for inputs
 int inputPins[2] = {BUTTON_0_PIN, BUTTON_1_PIN};
 bool inputStates[2] = {HIGH, HIGH};
+unsigned long inputLongpressAts[2] = {0, 0};
 
 // animation specific variables
+unsigned long nextRandomAnimationAt = 0;
 byte selectedAnimation = 0;
 byte previousSelectedAnimation = 0;
 uint16_t i = 0;
 uint16_t j = 0;
 unsigned long nextCycleAt = 0;
+unsigned long now = 0;
 
 uint32_t off = strip.Color(0, 0, 0);
 uint32_t mirroredPositions[LEDS] = {};
@@ -55,9 +58,18 @@ void setup() {
 }
 
 void loop() {
-  if (checkInput(0) == 1) {
-    // cycle to next animation
-    selectAnimation((selectedAnimation + 1) % 6);
+  now = millis();
+
+  switch (checkInput(0)) {
+    case 1:
+      // cycle to next animation
+      nextRandomAnimationAt = 0;
+      selectAnimation((selectedAnimation + 1) % 6);
+      break;
+    case 2:
+      // activate random animation cycling
+      selectRandomAnimation();
+      break;
   }
   switch (checkInput(1)) {
     case 1:
@@ -70,7 +82,9 @@ void loop() {
       break;
   }
 
-  if (millis() > nextCycleAt) {
+  if (nextRandomAnimationAt != 0 && now > nextRandomAnimationAt) {
+    selectRandomAnimation();
+  } else if (now > nextCycleAt) {
     switch(selectedAnimation) {
       case 0:
         infinity(color(0, 0, 255), 6, 50);
@@ -111,12 +125,21 @@ byte checkInput(byte which) {
     inputStates[which] = state;
     delay(50); // to avoid bouncing
     if (state) {
+      inputLongpressAts[which] = 0;
       return 0;
     } else {
+      inputLongpressAts[which] = now + 1000;
       return 1;
     }
+  } else {
+    unsigned long longpressAt = inputLongpressAts[which];
+    if (longpressAt != 0 && now > longpressAt) {
+      inputLongpressAts[which] = 0;
+      return 2;
+    } else {
+      return -1;
+    }
   }
-  return -1;
 }
 
 // cycle through the i loop
@@ -141,7 +164,17 @@ void selectAnimation(byte animation) {
   strip.show();
   selectedAnimation = animation;
   i = j = 0;
-  nextCycleAt = millis();
+  nextCycleAt = now;
+}
+
+// selects a random animation and also activates a random animation cycle
+void selectRandomAnimation() {
+  byte newAnimation;
+  do {
+    newAnimation = random(6);
+  } while (newAnimation == selectedAnimation);
+  selectAnimation(newAnimation);
+  nextRandomAnimationAt = now + 5000;
 }
 
 // Input a brightness for a color channel and get the dimmed version back,
