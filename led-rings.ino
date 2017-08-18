@@ -6,18 +6,85 @@
 #define SIGNAL_PIN 4
 #define LEDS 24
 
+// definitions for methods with optional arguments
+byte brightness(uint16_t brightness, uint16_t maxBrightness = 255);
+uint32_t color(byte r, byte g, byte b, byte maxBrightness = 255);
+void infinity(uint32_t color, uint16_t leds, uint32_t tail = 0);
+
 // initialize neo pixels
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(LEDS, SIGNAL_PIN, NEO_GRB + NEO_KHZ800);
 
+// animation specific variables
+uint16_t i = 0;
+unsigned long nextCycleAt = 0;
+unsigned long now;
+
+uint32_t mirroredPositions[LEDS] = {};
+uint16_t brightnessCap = 50;
 
 void setup() {
   // initialize all pixels to 'off'
   strip.begin();
   strip.show();
+
+  // setup array for easier mirrored animation
+  uint16_t mirrorOffset = strip.numPixels() + strip.numPixels() / 2 - 1;
+  for (uint16_t i = 0; i < strip.numPixels(); i++) {
+    if (i < strip.numPixels() / 2) {
+      mirroredPositions[i] = i;
+    } else {
+      mirroredPositions[i] = mirrorOffset - i;
+    }
+  }
 }
 
 void loop() {
+  now = millis();
+  if (now > nextCycleAt) {
+    infinity(color(0, 0, 255), 6);
+    nextCycleAt = now + 50;
+  }
   delay(5);
+}
+
+//////////////////////////////////////////////////
+// helper methods ////////////////////////////////
+//////////////////////////////////////////////////
+
+// cycle through the i loop
+void cycleI(uint16_t upper) {
+  i = (i + 1) % upper;
+}
+
+// Input a brightness for a color channel and get the dimmed version back,
+// according to brightnessCap which is the max brightness.
+byte brightness(uint16_t brightness, uint16_t maxBrightness) {
+  return brightness * (maxBrightness / 255.0) * (brightnessCap / 255.0);
+}
+
+// Input three color values (r, g, b) and get the dimmed color back, see
+// brightness.
+uint32_t color(byte r, byte g, byte b, byte maxBrightness) {
+  return strip.Color(brightness(r, maxBrightness), brightness(g, maxBrightness), brightness(b, maxBrightness));
+}
+
+void all(uint32_t color) {
+  for (uint16_t led = 0; led < strip.numPixels(); led++) {
+    strip.setPixelColor(led, color);
+  }
+}
+
+//////////////////////////////////////////////////
+// animation methods /////////////////////////////
+//////////////////////////////////////////////////
+
+void infinity(uint32_t color, uint16_t leds, uint32_t tail) {
+  all(tail);
+  for (uint16_t led = i; led < i + leds; led++) {
+    strip.setPixelColor(mirroredPositions[led % strip.numPixels()], color);
+  }
+  strip.show();
+  cycleI(strip.numPixels());
 }
 
 // Fill the dots one after the other with a color
