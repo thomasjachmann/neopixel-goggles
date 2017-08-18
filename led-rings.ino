@@ -65,7 +65,7 @@ void loop() {
     case 1:
       // cycle to next animation
       nextRandomAnimationAt = 0;
-      selectAnimation((selectedAnimation + 1) % 6);
+      selectAnimation((selectedAnimation + 1) % 7);
       break;
     case 2:
       // activate random animation cycling
@@ -106,6 +106,9 @@ void loop() {
         break;
       case 5:
         theaterChase(color(255, 0, 0), 50);
+        break;
+      case 6:
+        blink(50);
         break;
       case 98: // torch mode
         torch(1000);
@@ -174,7 +177,7 @@ void selectAnimation(byte animation) {
 void selectRandomAnimation() {
   byte newAnimation;
   do {
-    newAnimation = random(6);
+    newAnimation = random(7);
   } while (newAnimation == selectedAnimation);
   selectAnimation(newAnimation);
   nextRandomAnimationAt = now + 5000;
@@ -248,7 +251,7 @@ void uniformlyCycleThroughColors(uint8_t wait) {
 }
 
 void pumpColors(uint8_t wait) {
-  uint16_t hue = i * 85; // cycle through colors in 3 steps
+  uint16_t hue = i * 85; // cycle through the 3 basic colors
   uint16_t brightness = j;
   if (brightness > 255) {
     brightness = 510 - brightness; // counting down again
@@ -256,6 +259,26 @@ void pumpColors(uint8_t wait) {
   all(colorByHue(hue, brightness));
   strip.show();
   cycleJ(3, 510, wait);
+}
+
+void blink(uint8_t wait) {
+  byte size = strip.numPixels() / 2;
+  uint32_t color;
+  byte level = j;
+  if (level >= 42) {
+    level = 48 - level;
+    color = off;
+  } else {
+    color = colorByHue(i * 85); // cycle through the 3 basic colors
+  }
+  if (level < 6) {
+    strip.setPixelColor(mirroredPositions[(level + 9) % size], color);
+    strip.setPixelColor(mirroredPositions[8 - level], color);
+    strip.setPixelColor(mirroredPositions[size + (level + 9) % size], color);
+    strip.setPixelColor(mirroredPositions[size + 8 - level], color);
+    strip.show();
+  }
+  cycleJ(3, 48, wait);
 }
 
 void torch(uint8_t wait) {
