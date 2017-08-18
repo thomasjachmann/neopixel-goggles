@@ -56,7 +56,7 @@ void setup() {
 void loop() {
   if (checkInput(0)) {
     // cycle to next animation
-    selectAnimation((selectedAnimation + 1) % 5);
+    selectAnimation((selectedAnimation + 1) % 6);
   }
 
   now = millis();
@@ -80,6 +80,10 @@ void loop() {
         break;
       case 4:
         pumpColors();
+        nextCycleAt = now + 25;
+        break;
+      case 5:
+        theaterChase(color(255, 0, 0));
         nextCycleAt = now + 25;
         break;
     }
@@ -246,21 +250,19 @@ void rainbowCycle(uint8_t wait) {
 }
 
 //Theatre-style crawling lights.
-void theaterChase(uint32_t c, uint8_t wait) {
-  for (int j=0; j<10; j++) {  //do 10 cycles of chasing
-    for (int q=0; q < 3; q++) {
-      for (uint16_t i=0; i < strip.numPixels(); i=i+3) {
-        strip.setPixelColor(i+q, c);    //turn every third pixel on
-      }
-      strip.show();
-
-      delay(wait);
-
-      for (uint16_t i=0; i < strip.numPixels(); i=i+3) {
-        strip.setPixelColor(i+q, 0);        //turn every third pixel off
-      }
-    }
+void theaterChase(uint32_t c) {
+  uint16_t realJ = j / 2;
+  if (j % 2 == 1) {
+    c = 0;
+    realJ = (j -1) / 2;
   }
+  for (uint16_t led = 0; led < strip.numPixels(); led += 3) {
+    strip.setPixelColor(led + realJ, c);
+  }
+  if (j % 2 == 0) {
+    strip.show();
+  }
+  cycleJ(10, 6);
 }
 
 //Theatre-style crawling lights with rainbow effect
