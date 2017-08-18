@@ -26,6 +26,7 @@ unsigned long inputLongpressAts[2] = {0, 0};
 // animation specific variables
 unsigned long nextRandomAnimationAt = 0;
 byte selectedAnimation = 0;
+unsigned long previousNextRandomAnimationAt = 0;
 byte previousSelectedAnimation = 0;
 uint16_t i = 0;
 uint16_t j = 0;
@@ -75,6 +76,8 @@ void loop() {
     case 1:
       // go into torch mode
       previousSelectedAnimation = selectedAnimation;
+      previousNextRandomAnimationAt = nextRandomAnimationAt;
+      nextRandomAnimationAt = 0;
       selectAnimation(98);
       break;
     case 0:
@@ -272,6 +275,7 @@ void untorch(uint8_t wait) {
   strip.show();
   if (brightness == 0) {
     selectAnimation(previousSelectedAnimation);
+    nextRandomAnimationAt = previousNextRandomAnimationAt;
   } else {
     cycleI(18, wait / 18);
   }
