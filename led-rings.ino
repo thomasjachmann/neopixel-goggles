@@ -11,6 +11,7 @@
 // definitions for methods with optional arguments
 byte brightness(uint16_t brightness, uint16_t maxBrightness = 255);
 uint32_t color(byte r, byte g, byte b, byte maxBrightness = 255);
+uint32_t colorByHue(byte hue, byte brightness = 255);
 void infinity(uint32_t color, uint16_t leds, uint32_t tail = 0);
 
 // initialize neo pixels
@@ -54,7 +55,7 @@ void setup() {
 void loop() {
   if (checkInput(0)) {
     // cycle to next animation
-    selectAnimation((selectedAnimation + 1) % 3);
+    selectAnimation((selectedAnimation + 1) % 4);
   }
 
   now = millis();
@@ -71,6 +72,10 @@ void loop() {
       case 2:
         circle(color(0, 255, 0), 3);
         nextCycleAt = now + 50;
+        break;
+      case 3:
+        uniformlyCycleThroughColors();
+        nextCycleAt = now + 5;
         break;
     }
   }
@@ -119,6 +124,20 @@ uint32_t color(byte r, byte g, byte b, byte maxBrightness) {
   return strip.Color(brightness(r, maxBrightness), brightness(g, maxBrightness), brightness(b, maxBrightness));
 }
 
+// Input a value 0 to 255 to get a color value.
+// The colours are a transition r - g - b - back to r.
+uint32_t colorByHue(byte hue, byte brightness) {
+  if (hue < 85) {
+    return color(255 - hue * 3, 0, hue * 3, brightness);
+  } else if (hue < 170) {
+    hue -= 85;
+    return color(0, hue * 3, 255 - hue * 3, brightness);
+  } else {
+    hue -= 170;
+    return color(hue * 3, 255 - hue * 3, 0, brightness);
+  }
+}
+
 void all(uint32_t color) {
   for (uint16_t led = 0; led < strip.numPixels(); led++) {
     strip.setPixelColor(led, color);
@@ -152,6 +171,12 @@ void circle(uint32_t color, uint16_t leds) {
   }
   strip.show();
   cycleI(strip.numPixels());
+}
+
+void uniformlyCycleThroughColors() {
+  all(colorByHue(i));
+  strip.show();
+  cycleI(256);
 }
 
 // Fill the dots one after the other with a color
