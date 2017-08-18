@@ -24,6 +24,7 @@ bool inputStates[2] = {HIGH, HIGH};
 
 // animation specific variables
 byte selectedAnimation = 0;
+byte previousSelectedAnimation = 0;
 uint16_t i = 0;
 uint16_t j = 0;
 unsigned long nextCycleAt = 0;
@@ -54,9 +55,19 @@ void setup() {
 }
 
 void loop() {
-  if (checkInput(0)) {
+  if (checkInput(0) == 1) {
     // cycle to next animation
     selectAnimation((selectedAnimation + 1) % 6);
+  }
+  switch (checkInput(1)) {
+    case 1:
+      // go into torch mode
+      previousSelectedAnimation = selectedAnimation;
+      selectAnimation(98);
+      break;
+    case 0:
+      selectAnimation(99);
+      break;
   }
 
   if (millis() > nextCycleAt) {
@@ -79,6 +90,12 @@ void loop() {
       case 5:
         theaterChase(color(255, 0, 0), 50);
         break;
+      case 98: // torch mode
+        torch(1000);
+        break;
+      case 99: // untorch mode
+        untorch(1000);
+        break;
     }
   }
 }
@@ -88,16 +105,18 @@ void loop() {
 //////////////////////////////////////////////////
 
 // Return wether the given input has changed to high
-bool checkInput(byte which) {
+byte checkInput(byte which) {
   bool state = digitalRead(inputPins[which]);
   if (state != inputStates[which]) {
     inputStates[which] = state;
     delay(50); // to avoid bouncing
-    if (!state) {
-      return true;
+    if (state) {
+      return 0;
+    } else {
+      return 1;
     }
   }
-  return false;
+  return -1;
 }
 
 // cycle through the i loop
@@ -201,6 +220,28 @@ void pumpColors(uint8_t wait) {
   all(colorByHue(hue, brightness));
   strip.show();
   cycleJ(3, 510, wait);
+}
+
+void torch(uint8_t wait) {
+  uint16_t brightness = 15 * i;
+  all(strip.Color(brightness, brightness, brightness));
+  strip.show();
+  if (brightness == 255) {
+    nextCycleAt += 1000;
+  } else {
+    cycleI(18, wait / 18);
+  }
+}
+
+void untorch(uint8_t wait) {
+  uint16_t brightness = 255 - 15 * i;
+  all(strip.Color(brightness, brightness, brightness));
+  strip.show();
+  if (brightness == 0) {
+    selectAnimation(previousSelectedAnimation);
+  } else {
+    cycleI(18, wait / 18);
+  }
 }
 
 // Fill the dots one after the other with a color
