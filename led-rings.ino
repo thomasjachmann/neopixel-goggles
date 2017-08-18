@@ -9,10 +9,11 @@
 #define LEDS 24
 
 // definitions for methods with optional arguments
+void cycleI(uint16_t upper, uint8_t wait = 0);
 byte brightness(uint16_t brightness, uint16_t maxBrightness = 255);
 uint32_t color(byte r, byte g, byte b, byte maxBrightness = 255);
 uint32_t colorByHue(byte hue, byte brightness = 255);
-void infinity(uint32_t color, uint16_t leds, uint32_t tail = 0);
+void infinity(uint32_t color, uint16_t leds, uint8_t wait, uint32_t tail = 0);
 
 // initialize neo pixels
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(LEDS, SIGNAL_PIN, NEO_GRB + NEO_KHZ800);
@@ -26,7 +27,6 @@ byte selectedAnimation = 0;
 uint16_t i = 0;
 uint16_t j = 0;
 unsigned long nextCycleAt = 0;
-unsigned long now;
 
 uint32_t off = strip.Color(0, 0, 0);
 uint32_t mirroredPositions[LEDS] = {};
@@ -59,36 +59,28 @@ void loop() {
     selectAnimation((selectedAnimation + 1) % 6);
   }
 
-  now = millis();
-  if (now > nextCycleAt) {
+  if (millis() > nextCycleAt) {
     switch(selectedAnimation) {
       case 0:
-        infinity(color(0, 0, 255), 6);
-        nextCycleAt = now + 50;
+        infinity(color(0, 0, 255), 6, 50);
         break;
       case 1:
-        infinity(color(0, 0, 255), 6, color(0, 32, 0));
-        nextCycleAt = now + 50;
+        infinity(color(0, 0, 255), 6, 50, color(0, 32, 0));
         break;
       case 2:
-        circle(color(0, 255, 0), 3);
-        nextCycleAt = now + 50;
+        circle(color(0, 255, 0), 3, 50);
         break;
       case 3:
-        uniformlyCycleThroughColors();
-        nextCycleAt = now + 5;
+        uniformlyCycleThroughColors(5);
         break;
       case 4:
-        pumpColors();
-        nextCycleAt = now + 25;
+        pumpColors(1);
         break;
       case 5:
-        theaterChase(color(255, 0, 0));
-        nextCycleAt = now + 25;
+        theaterChase(color(255, 0, 0), 50);
         break;
     }
   }
-  delay(5);
 }
 
 //////////////////////////////////////////////////
@@ -109,16 +101,18 @@ bool checkInput(byte which) {
 }
 
 // cycle through the i loop
-void cycleI(uint16_t upper) {
+void cycleI(uint16_t upper, uint8_t wait) {
   i = (i + 1) % upper;
+  nextCycleAt += wait;
 }
 
 // cycle through the j loop (eventually also cycling through i)
-void cycleJ(uint16_t upperI, uint16_t upperJ) {
+void cycleJ(uint16_t upperI, uint16_t upperJ, uint8_t wait) {
   j = (j + 1) % upperJ;
   if (j == 0) {
     cycleI(upperI);
   }
+  nextCycleAt += wait;
 }
 
 // selects an animation and resets cycle counters and timing so that it starts
@@ -126,7 +120,7 @@ void cycleJ(uint16_t upperI, uint16_t upperJ) {
 void selectAnimation(byte animation) {
   selectedAnimation = animation;
   i = j = -1;
-  nextCycleAt = 0;
+  nextCycleAt = millis();
 }
 
 // Input a brightness for a color channel and get the dimmed version back,
@@ -169,16 +163,16 @@ void clear() {
 // animation methods /////////////////////////////
 //////////////////////////////////////////////////
 
-void infinity(uint32_t color, uint16_t leds, uint32_t tail) {
+void infinity(uint32_t color, uint16_t leds, uint8_t wait, uint32_t tail) {
   all(tail);
   for (uint16_t led = i; led < i + leds; led++) {
     strip.setPixelColor(mirroredPositions[led % strip.numPixels()], color);
   }
   strip.show();
-  cycleI(strip.numPixels());
+  cycleI(strip.numPixels(), wait);
 }
 
-void circle(uint32_t color, uint16_t leds) {
+void circle(uint32_t color, uint16_t leds, uint8_t wait) {
   clear();
   for (uint16_t led = i; led < i + leds; led++) {
     strip.setPixelColor(mirroredPositions[led % strip.numPixels()], color);
@@ -187,32 +181,24 @@ void circle(uint32_t color, uint16_t leds) {
     strip.setPixelColor(mirroredPositions[(led + strip.numPixels() / 2) % strip.numPixels()], color);
   }
   strip.show();
-  cycleI(strip.numPixels());
+  cycleI(strip.numPixels(), wait);
 }
 
-void uniformlyCycleThroughColors() {
+void uniformlyCycleThroughColors(uint8_t wait) {
   all(colorByHue(i));
   strip.show();
-  cycleI(256);
+  cycleI(256, wait);
 }
 
-void pumpColors() {
+void pumpColors(uint8_t wait) {
   uint16_t hue = i * 85; // cycle through colors in 3 steps
   uint16_t brightness = j;
   if (brightness > 255) {
     brightness = 510 - brightness; // counting down again
   }
-  for (uint16_t hue = 0; hue < 255; hue += 85) {
-    for (uint16_t brightness = 0; brightness < 256; brightness += 16) {
-      all(colorByHue(hue, brightness));
-      strip.show();
-    }
-    for (int brightness = 255; brightness > 0; brightness -= 16) {
-      all(colorByHue(hue, brightness));
-      strip.show();
-    }
-  }
-  cycleJ(3, 510);
+  all(colorByHue(hue, brightness));
+  strip.show();
+  cycleJ(3, 510, wait);
 }
 
 // Fill the dots one after the other with a color
@@ -250,7 +236,7 @@ void rainbowCycle(uint8_t wait) {
 }
 
 //Theatre-style crawling lights.
-void theaterChase(uint32_t c) {
+void theaterChase(uint32_t c, uint8_t wait) {
   uint16_t realJ = j / 2;
   if (j % 2 == 1) {
     c = 0;
@@ -261,8 +247,10 @@ void theaterChase(uint32_t c) {
   }
   if (j % 2 == 0) {
     strip.show();
+    cycleJ(10, 6, wait);
+  } else {
+    cycleJ(10, 6, 0);
   }
-  cycleJ(10, 6);
 }
 
 //Theatre-style crawling lights with rainbow effect
