@@ -24,6 +24,7 @@ bool inputStates[2] = {HIGH, HIGH};
 // animation specific variables
 byte selectedAnimation = 0;
 uint16_t i = 0;
+uint16_t j = 0;
 unsigned long nextCycleAt = 0;
 unsigned long now;
 
@@ -55,7 +56,7 @@ void setup() {
 void loop() {
   if (checkInput(0)) {
     // cycle to next animation
-    selectAnimation((selectedAnimation + 1) % 4);
+    selectAnimation((selectedAnimation + 1) % 5);
   }
 
   now = millis();
@@ -76,6 +77,10 @@ void loop() {
       case 3:
         uniformlyCycleThroughColors();
         nextCycleAt = now + 5;
+        break;
+      case 4:
+        pumpColors();
+        nextCycleAt = now + 25;
         break;
     }
   }
@@ -104,11 +109,19 @@ void cycleI(uint16_t upper) {
   i = (i + 1) % upper;
 }
 
-// selects an animation and resets cycle counter and timing so that it starts
+// cycle through the j loop (eventually also cycling through i)
+void cycleJ(uint16_t upperI, uint16_t upperJ) {
+  j = (j + 1) % upperJ;
+  if (j == 0) {
+    cycleI(upperI);
+  }
+}
+
+// selects an animation and resets cycle counters and timing so that it starts
 // immediately
 void selectAnimation(byte animation) {
   selectedAnimation = animation;
-  i = -1;
+  i = j = -1;
   nextCycleAt = 0;
 }
 
@@ -177,6 +190,25 @@ void uniformlyCycleThroughColors() {
   all(colorByHue(i));
   strip.show();
   cycleI(256);
+}
+
+void pumpColors() {
+  uint16_t hue = i * 85; // cycle through colors in 3 steps
+  uint16_t brightness = j;
+  if (brightness > 255) {
+    brightness = 510 - brightness; // counting down again
+  }
+  for (uint16_t hue = 0; hue < 255; hue += 85) {
+    for (uint16_t brightness = 0; brightness < 256; brightness += 16) {
+      all(colorByHue(hue, brightness));
+      strip.show();
+    }
+    for (int brightness = 255; brightness > 0; brightness -= 16) {
+      all(colorByHue(hue, brightness));
+      strip.show();
+    }
+  }
+  cycleJ(3, 510);
 }
 
 // Fill the dots one after the other with a color
