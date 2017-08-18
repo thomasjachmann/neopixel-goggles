@@ -26,6 +26,7 @@ uint16_t i = 0;
 unsigned long nextCycleAt = 0;
 unsigned long now;
 
+uint32_t off = strip.Color(0, 0, 0);
 uint32_t mirroredPositions[LEDS] = {};
 uint16_t brightnessCap = 50;
 
@@ -53,7 +54,7 @@ void setup() {
 void loop() {
   if (checkInput(0)) {
     // cycle to next animation
-    selectAnimation((selectedAnimation + 1) % 2);
+    selectAnimation((selectedAnimation + 1) % 3);
   }
 
   now = millis();
@@ -65,6 +66,10 @@ void loop() {
         break;
       case 1:
         infinity(color(0, 0, 255), 6, color(0, 32, 0));
+        nextCycleAt = now + 50;
+        break;
+      case 2:
+        circle(color(0, 255, 0), 3);
         nextCycleAt = now + 50;
         break;
     }
@@ -120,6 +125,10 @@ void all(uint32_t color) {
   }
 }
 
+void clear() {
+  all(off);
+}
+
 //////////////////////////////////////////////////
 // animation methods /////////////////////////////
 //////////////////////////////////////////////////
@@ -128,6 +137,18 @@ void infinity(uint32_t color, uint16_t leds, uint32_t tail) {
   all(tail);
   for (uint16_t led = i; led < i + leds; led++) {
     strip.setPixelColor(mirroredPositions[led % strip.numPixels()], color);
+  }
+  strip.show();
+  cycleI(strip.numPixels());
+}
+
+void circle(uint32_t color, uint16_t leds) {
+  clear();
+  for (uint16_t led = i; led < i + leds; led++) {
+    strip.setPixelColor(mirroredPositions[led % strip.numPixels()], color);
+  }
+  for (uint16_t led = i; led < i + leds; led++) {
+    strip.setPixelColor(mirroredPositions[(led + strip.numPixels() / 2) % strip.numPixels()], color);
   }
   strip.show();
   cycleI(strip.numPixels());
