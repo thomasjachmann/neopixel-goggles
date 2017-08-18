@@ -3,6 +3,8 @@
   #include <avr/power.h>
 #endif
 
+#define BUTTON_0_PIN 0
+#define BUTTON_1_PIN 1
 #define SIGNAL_PIN 4
 #define LEDS 24
 
@@ -14,7 +16,12 @@ void infinity(uint32_t color, uint16_t leds, uint32_t tail = 0);
 // initialize neo pixels
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(LEDS, SIGNAL_PIN, NEO_GRB + NEO_KHZ800);
 
+// variables for inputs
+int inputPins[2] = {BUTTON_0_PIN, BUTTON_1_PIN};
+bool inputStates[2] = {HIGH, HIGH};
+
 // animation specific variables
+byte selectedAnimation = 0;
 uint16_t i = 0;
 unsigned long nextCycleAt = 0;
 unsigned long now;
@@ -26,6 +33,11 @@ void setup() {
   // initialize all pixels to 'off'
   strip.begin();
   strip.show();
+
+  // setup input pins
+  for (byte i = 0; i < sizeof(inputPins); i++) {
+    pinMode(inputPins[i], INPUT_PULLUP);
+  }
 
   // setup array for easier mirrored animation
   uint16_t mirrorOffset = strip.numPixels() + strip.numPixels() / 2 - 1;
@@ -39,10 +51,23 @@ void setup() {
 }
 
 void loop() {
+  if (checkInput(0)) {
+    // cycle to next animation
+    selectAnimation((selectedAnimation + 1) % 2);
+  }
+
   now = millis();
   if (now > nextCycleAt) {
-    infinity(color(0, 0, 255), 6);
-    nextCycleAt = now + 50;
+    switch(selectedAnimation) {
+      case 0:
+        infinity(color(0, 0, 255), 6);
+        nextCycleAt = now + 50;
+        break;
+      case 1:
+        infinity(color(0, 0, 255), 6, color(0, 32, 0));
+        nextCycleAt = now + 50;
+        break;
+    }
   }
   delay(5);
 }
@@ -51,9 +76,30 @@ void loop() {
 // helper methods ////////////////////////////////
 //////////////////////////////////////////////////
 
+// Return wether the given input has changed to high
+bool checkInput(byte which) {
+  bool state = digitalRead(inputPins[which]);
+  if (state != inputStates[which]) {
+    inputStates[which] = state;
+    delay(50); // to avoid bouncing
+    if (!state) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // cycle through the i loop
 void cycleI(uint16_t upper) {
   i = (i + 1) % upper;
+}
+
+// selects an animation and resets cycle counter and timing so that it starts
+// immediately
+void selectAnimation(byte animation) {
+  selectedAnimation = animation;
+  i = -1;
+  nextCycleAt = 0;
 }
 
 // Input a brightness for a color channel and get the dimmed version back,
