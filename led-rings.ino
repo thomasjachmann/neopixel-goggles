@@ -140,7 +140,7 @@ void selectAnimation(byte animation) {
   clear();
   strip.show();
   selectedAnimation = animation;
-  i = j = -1;
+  i = j = 0;
   nextCycleAt = millis();
 }
 
