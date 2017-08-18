@@ -118,6 +118,8 @@ void cycleJ(uint16_t upperI, uint16_t upperJ, uint8_t wait) {
 // selects an animation and resets cycle counters and timing so that it starts
 // immediately
 void selectAnimation(byte animation) {
+  clear();
+  strip.show();
   selectedAnimation = animation;
   i = j = -1;
   nextCycleAt = millis();
