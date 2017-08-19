@@ -65,7 +65,7 @@ void loop() {
     case 1:
       // cycle to next animation
       nextRandomAnimationAt = 0;
-      selectAnimation((selectedAnimation + 1) % 8);
+      selectAnimation((selectedAnimation + 1) % 9);
       break;
     case 2:
       // activate random animation cycling
@@ -112,6 +112,9 @@ void loop() {
         break;
       case 7:
         rainbowCycle(20);
+        break;
+      case 8:
+        smiley(50);
         break;
       case 98: // torch mode
         torch(1000);
@@ -180,7 +183,7 @@ void selectAnimation(byte animation) {
 void selectRandomAnimation() {
   byte newAnimation;
   do {
-    newAnimation = random(8);
+    newAnimation = random(9);
   } while (newAnimation == selectedAnimation);
   selectAnimation(newAnimation);
   nextRandomAnimationAt = now + 5000;
@@ -282,6 +285,27 @@ void blink(uint8_t wait) {
     strip.show();
   }
   cycleJ(3, 48, wait);
+}
+
+void smiley(uint8_t wait) {
+  strip.setPixelColor(1, colorByHue(random(255)));
+  strip.setPixelColor(4, colorByHue(random(255)));
+  strip.setPixelColor(6, colorByHue(random(255)));
+  strip.setPixelColor(7, colorByHue(random(255)));
+  strip.setPixelColor(8, colorByHue(random(255)));
+  strip.setPixelColor(9, colorByHue(random(255)));
+  strip.setPixelColor(10, colorByHue(random(255)));
+  strip.setPixelColor(11, colorByHue(random(255)));
+  strip.setPixelColor(12, colorByHue(random(255)));
+  strip.setPixelColor(13, colorByHue(random(255)));
+  strip.setPixelColor(14, colorByHue(random(255)));
+  strip.setPixelColor(15, colorByHue(random(255)));
+  strip.setPixelColor(16, colorByHue(random(255)));
+  strip.setPixelColor(17, colorByHue(random(255)));
+  strip.setPixelColor(19, colorByHue(random(255)));
+  strip.setPixelColor(22, colorByHue(random(255)));
+  strip.show();
+  nextCycleAt += wait;
 }
 
 void torch(uint8_t wait) {
