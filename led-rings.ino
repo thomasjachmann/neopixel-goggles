@@ -75,9 +75,11 @@ void loop() {
   switch (checkInput(1)) {
     case 1:
       // go into torch mode
-      previousSelectedAnimation = selectedAnimation;
-      previousNextRandomAnimationAt = nextRandomAnimationAt;
-      nextRandomAnimationAt = 0;
+      if (selectedAnimation != 99) {
+        previousSelectedAnimation = selectedAnimation;
+        previousNextRandomAnimationAt = nextRandomAnimationAt;
+        nextRandomAnimationAt = 0;
+      }
       selectAnimation(98);
       break;
     case 0:
