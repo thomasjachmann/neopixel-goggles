@@ -56,6 +56,9 @@ void setup() {
       mirroredPositions[i] = mirrorOffset - i;
     }
   }
+
+  // seed random number generator
+  randomSeed(analogRead(3));
 }
 
 void loop() {
