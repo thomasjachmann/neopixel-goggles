@@ -24,7 +24,7 @@ bool inputStates[2] = {HIGH, HIGH};
 unsigned long inputLongpressAts[2] = {0, 0};
 
 // animation specific variables
-unsigned long nextRandomAnimationAt = 0;
+unsigned long nextRandomAnimationAt = 1;
 byte selectedAnimation = 0;
 unsigned long previousNextRandomAnimationAt = 0;
 byte previousSelectedAnimation = 0;
