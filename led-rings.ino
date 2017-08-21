@@ -368,8 +368,9 @@ void rainbow(uint8_t wait) {
 
 // Slightly different, this makes the rainbow equally distributed throughout
 void rainbowCycle(uint8_t wait) {
+  byte size = strip.numPixels() / 2;
   for(uint16_t led = 0; led < strip.numPixels(); led++) {
-    strip.setPixelColor(mirroredPositions[led], colorByHue(((led * 256 / strip.numPixels()) + i) & 255));
+    strip.setPixelColor(mirroredPositions[led], colorByHue((((led % size) * 256 / size) + i) & 255));
   }
   strip.show();
   cycleI(256 * 5, wait); // 5 cycles of all colors on colorByHue
