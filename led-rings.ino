@@ -66,9 +66,18 @@ void loop() {
 
   switch (checkInput(0)) {
     case 1:
-      // cycle to next animation
-      nextRandomAnimationAt = 0;
-      selectAnimation((selectedAnimation + 1) % 9);
+      if (selectedAnimation == 98) {
+        // switch brightness when pressed with button 1 held down
+        if (brightnessCap == 50) {
+          brightnessCap = 10;
+        } else {
+          brightnessCap = 50;
+        }
+      } else {
+        // cycle to next animation
+        nextRandomAnimationAt = 0;
+        selectAnimation((selectedAnimation + 1) % 9);
+      }
       break;
     case 2:
       // activate random animation cycling
